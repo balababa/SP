@@ -47,7 +47,11 @@ class Pool implements Action{
         this.cubicle = cubicle;
         setManager();
     }
-    //put baskets and cubicles into manager
+    public int getBasket(){return BasketList.size();}
+    public int getCubicle(){return CubicleList.size();}
+
+
+            //put baskets and cubicles into manager
     public void setManager()
     {
         for(int n=0;n<this.basket;n++)
@@ -72,7 +76,7 @@ class Pool implements Action{
         if(this.getClass().equals(Basket.class))
         {
             BasketList.add(this);
-            System.out.println(Thread.currentThread().getName() + " returns basket"+"\n"+state());
+            System.out.println(Thread.currentThread().getName() + " returns basket"+"\n");
         }
 
         //when a person is trying to depart , don't forget to return cubicle
@@ -80,7 +84,7 @@ class Pool implements Action{
         {
             waiting_dressing();
             CubicleList.add(this);
-            System.out.println(Thread.currentThread().getName() + " returns cubicle"+"\n"+ state());
+            System.out.println(Thread.currentThread().getName() + " returns cubicle"+"\n");
         }
         return true;
     }
@@ -115,12 +119,12 @@ class Pool implements Action{
             {
                 System.out.println("a person : " + Thread.currentThread().getName()
                         + " has gotten a basket and a cubicle " + "and will occupy cubicle at "
-                        + sleepTime + "seconds"+"(e)(f)"+"\n"+state());
+                        + sleepTime + "seconds"+"(e)(f)");
             }
             else
                 System.out.println("a person : " + Thread.currentThread().getName()
                         + " has gotten a basket and a cubicle " + "and will occupy cubicle at "
-                        + sleepTime + "seconds"+"(a)(b)(c)"+"\n"+state());
+                        + sleepTime + "seconds"+"(a)(b)(c)");
 
             Thread.currentThread().sleep(1000*sleepTime);
         }catch(InterruptedException e)
@@ -214,7 +218,38 @@ class terminal extends Thread{
 }
 
 
-class viewer extends Thread{
+class viewer extends Thread {
+    Pool p=null;
+    List<Thread> list=null;
+
+    public int basketAmount=0;
+    public int cubicleAmount=0;
+    viewer(Pool p,List<Thread> list)
+    {
+        this.list=list;
+        this.p=p;
+        System.out.println(p.getBasket());
+    }
+    public void run()
+    {
+        while(true) {
+            if (p.getBasket() != basketAmount || p.getCubicle() != cubicleAmount) {
+                for (Thread t : list) {
+                    t.suspend();
+                }
+                System.out.println(p.state());
+                basketAmount=p.getBasket();
+                cubicleAmount=p.getCubicle();
+
+                for (Thread t : list) {
+                    t.resume();
+                }
+            }
+
+
+
+        }
+    }
 
 
 
@@ -236,8 +271,9 @@ public class SP {
         {
             l.start();
         }
-        Thread viewer=new terminal(list);//additional thread for checking other threads
-
+        Thread terminaler=new terminal(list);//additional thread for checking other threads
+        Thread viewer= new viewer(pool,list);
         viewer.start();
+        terminaler.start();
     }
 }
