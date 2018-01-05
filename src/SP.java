@@ -1,10 +1,11 @@
+import com.sun.source.tree.SynchronizedTree;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-interface Action
-{
+interface Action {
     //returns basket or cubicle (when depaturing from dressing room)
     public boolean get();
     //randomly sleeping ( time for dressing )
@@ -35,11 +36,12 @@ class Pool implements Action{
     static Map<Boolean, List<Pool>> CubicleManager = new HashMap<>();
     //default the number of baskets and cublicles
     Pool(){
-        this.basket = 20;
-        this.cubicle = 10;
+
+        this.basket = 3;
+        this.cubicle = 2;
     }
 
-    Pool (int basket , int cubicle , String name)
+    Pool (int basket , int cubicle)
     {
         this.basket = basket;
         this.cubicle = cubicle;
@@ -70,17 +72,16 @@ class Pool implements Action{
         if(this.getClass().equals(Basket.class))
         {
             BasketList.add(this);
-            System.out.println(Thread.currentThread().getName() + " returns basket");
+            System.out.println(Thread.currentThread().getName() + " returns basket"+"\n"+state());
         }
 
         //when a person is trying to depart , don't forget to return cubicle
         if(this.getClass().equals(Cubicle.class))
         {
-            CubicleList.add(this);
             waiting_dressing();
-            System.out.println(Thread.currentThread().getName() + " returns cubicle");
+            CubicleList.add(this);
+            System.out.println(Thread.currentThread().getName() + " returns cubicle"+"\n"+ state());
         }
-
         return true;
     }
     public synchronized boolean distribution(Person thread)
@@ -114,18 +115,27 @@ class Pool implements Action{
             {
                 System.out.println("a person : " + Thread.currentThread().getName()
                         + " has gotten a basket and a cubicle " + "and will occupy cubicle at "
-                        + sleepTime + "seconds"+"(e)(f)");
+                        + sleepTime + "seconds"+"(e)(f)"+"\n"+state());
             }
             else
                 System.out.println("a person : " + Thread.currentThread().getName()
                         + " has gotten a basket and a cubicle " + "and will occupy cubicle at "
-                        + sleepTime + "seconds"+"(a)(b)(c)");
+                        + sleepTime + "seconds"+"(a)(b)(c)"+"\n"+state());
 
             Thread.currentThread().sleep(1000*sleepTime);
         }catch(InterruptedException e)
         {
             e.printStackTrace();
         }
+    }
+
+    static String state(){
+        return((""
+                +"basket : " + BasketList.size()+"\n"
+                +"cubucle : " + CubicleList.size())
+                +"\n------------------------------\n");
+
+
     }
 }
 class Person extends Thread {
@@ -142,22 +152,30 @@ class Person extends Thread {
 
 
     public void run() {
+
+        try{
+            this.sleep((long) (Math.random()*2000+300));
+        }catch(InterruptedException e)
+        {
+            e.printStackTrace();
+        }
         //(a)(b)(c) returns cubicle
         while(!newPool.distribution(this));
+
+
         newCubicle.get();
         basket++; //arrival is given a new basket
 
         //(d)
         System.out.println("a person : " + Thread.currentThread().getName()
                 + " is swiming" + "(d)" );
-
         //depature is given a high priority
         this.setPriority(MAX_PRIORITY);
 
         //(e)(f) returns basket and cubicle
         while(!newPool.distribution(this));
-        newBasket.get();
         newCubicle.get();
+        newBasket.get();
         basket--;//depature returns a basket
         System.out.println("a person : " + Thread.currentThread().getName()
                 + " has departed from pool" + "(complete)");
@@ -194,6 +212,14 @@ class terminal extends Thread{
         }
     }
 }
+
+
+class viewer extends Thread{
+
+
+
+}
+
 public class SP {
     public static void main(String[] args) throws InterruptedException
     {
@@ -201,7 +227,7 @@ public class SP {
 
         List<Thread> list =new ArrayList<>();
         pool.setManager();//manage threads' baskets and cubicles states
-        for(int n=0;n<30;n++)
+        for(int n=0;n<5;n++)
         {
             Thread thread = new Person(pool);
             list.add(thread);
