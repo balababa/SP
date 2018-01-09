@@ -5,9 +5,9 @@ import java.util.Map;
 
 interface Action {
 
-    public boolean get();  //returns basket or cubicle (when depaturing from dressing room)
-    public void getWaitingTime(Person who); //randomly sleeping ( time for dressing )
-    public void waiting(int sleepTime);
+    public boolean get();  //returns basket or cubicle (when someones depature from cubicle)
+    public void getWaitingTime(Person who); //randomly gets sleepingTime
+    public void waiting(int sleepTime); //takes time for waiting
 
 }
 
@@ -23,21 +23,22 @@ class Cubicle extends Pool
 }
 
 class Pool  implements Action {
-    private static int basket;
-    private static int cubicle;
-    public static boolean available=true;
+    private static int basket; //a pool that possesses the number of baskets
+    private static int cubicle;//a pool that possesses the number of cubicles
+    public static boolean available=true; //judgues if resoures can be distributed now
     public static int depature=0; //statistics depatures
-    static viewer viewer; //allocate a view to pool
+    static viewer viewer=null; //allocate a viewer to pool
+
     /*
-     * List is responsible for managing List (to judge if Basket/Cubicle are available or not?)
+     * List is responsible for managing resouces (basket and cubicle)
      */
+
     static List<Pool> BasketList = new ArrayList<>();
     static List<Pool> CubicleList = new ArrayList<>();
-
     //default the number of baskets and cublicles
     Pool(){
-        this.basket = 1200;
-        this.cubicle = 1000;
+        this.basket = 5;
+        this.cubicle = 3;
     }
 
     Pool (int basket , int cubicle)
@@ -46,16 +47,14 @@ class Pool  implements Action {
         this.cubicle = cubicle;
         setManager();
     }
-    public int getBasket(){return BasketList.size();}
-    public int getCubicle(){return CubicleList.size();}
-    //put baskets and cubicles into manager
+
+    //put baskets and cubicles into individual list
     public void setManager()
     {
         for(int n=0;n<this.basket;n++)
         {
             Pool newBasket = new Basket();
             BasketList.add(newBasket);
-
         }
 
         for(int n=0;n<this.cubicle;n++)
@@ -65,9 +64,14 @@ class Pool  implements Action {
         }
 
     }
+    public int getBasket(){return BasketList.size();}
+    public int getCubicle(){return CubicleList.size();}
+
     static synchronized void CubicleAdd(Pool cubicle){CubicleList.add(cubicle);}
     static synchronized void BasketAdd(Pool basket){BasketList.add(basket);}
-    public  boolean get()
+
+
+    public boolean get()
     {
         //when a person is trying to depart , don't forget to return basket
         if(this.getClass().equals(Basket.class))
@@ -79,21 +83,29 @@ class Pool  implements Action {
 
         return true;
     }
+
+    /*
+     * "acutural_distrubtion" will acturally distribute resoures in real
+     */
     static synchronized void actural_distribution(Person person)
     {
         if(person.getPerson_Basket()==0)
         {
             person.newBasket= BasketList.get(0);
             BasketList.remove(0);
+            person.basket++;
         }
         person.newCubicle= CubicleList.get(0);
         CubicleList.remove(0);
         available=false;
     }
-    public  synchronized boolean distribution(Person person)
-    {
-        //ensure basket and cubicle is getting enough
 
+    /*
+     * "distrubtion" is to determine if available resources left
+     */
+    public synchronized boolean distribution(Person person)
+    {
+        //if available is false then person will be forced to wait
         while(!available)
         {
             {
@@ -105,6 +117,7 @@ class Pool  implements Action {
                 }
             }
         }
+        //ensures basket and cubicle both are getting enough
         if((BasketList.size() + person.getPerson_Basket() >0 && CubicleList.size()>0))
         {
             viewer.state_loading(this, person);
@@ -117,20 +130,20 @@ class Pool  implements Action {
     }
     public void getWaitingTime(Person person) {
         //randomly sleeping ( time for dressing )
-        person.sleepTime = (int) (Math.random()*10+1);
+        person.sleepingTime = (int) (Math.random()*10+1);
         actural_distribution(person);
         if(person.getPriority()==person.MAX_PRIORITY)
         {
             System.out.println("a person : " + person.getName()
                     + " has gotten a basket and a cubicle " + "and will occupy cubicle at "
-                    + person.sleepTime + "seconds"+"(e)(f)");
+                    + person.sleepingTime + "seconds"+"(e)(f)");
         }
         else
 
         {
             System.out.println("a person : " + person.getName()
                     + " has gotten a basket and a cubicle " + "and will occupy cubicle at "
-                    + person.sleepTime + "seconds"+"(a)(b)(c)");
+                    + person.sleepingTime + "seconds"+"(a)(b)(c)");
         }
 
     }
@@ -144,7 +157,6 @@ class Pool  implements Action {
         }
     }
 
-
     static String state(){
         return((""
                 +"basket : " + BasketList.size()+"\n"
@@ -156,99 +168,108 @@ class Person extends Thread {
     Pool newPool =null;
     Pool newBasket =null;
     Pool newCubicle =null;
-    public int sleepTime=0;
+    public int sleepingTime=0; //waiting time
     public int basket=0;
     static viewer viewer=null;
-    static update updater;
+    static update updater=null;
 
     Person(Pool pool)
     {
         this.newPool = pool;
-        this.viewer=pool.viewer;
-        this.updater=viewer.updater;
+        this.viewer=pool.viewer; //allocate a viewer
+        this.updater=viewer.updater; //allocate a updater
     }
     public int getPerson_Basket() {return this.basket;}
 
 
     public void run() {
 
+        /*
+         * startring threads after 0.3 to 2 sec
+         */
         try{
             this.sleep((long) (Math.random()*2000+300));
         }catch(InterruptedException e)
         {
             e.printStackTrace();
         }
-        //(a)(b)(c) returns cubicle
-        while(!newPool.distribution(this));
+        /*
+         * (a)(b)(c)
+         */
+        while(!newPool.distribution(this)); //distributions starting (distributes resources if they are all available)
+        newPool.waiting(sleepingTime);//starts dressing according to sleepTime
 
-        // newPool.getWaitingTime(this);
-
-        newPool.waiting(sleepTime);//starts dressing according to sleepTime
-
+        /*
+         * update data
+         */
         try {
             updater.setUpdate(newCubicle,this);
         } catch (InterruptedException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
-        //  viewer.state_incidence(newCubicle,this);//departure from cubicle
-        basket++; //arrival is given a new basket
-
-        //(d)
+        /*
+         * (d)
+         */
         System.out.println("a person : " + Thread.currentThread().getName()
                 + " is swiming" + "(d)" );
-        //depature is given a high priority
-        this.setPriority(MAX_PRIORITY);
+        this.setPriority(MAX_PRIORITY);//depature is given a high priority
 
-        //(e)(f) returns basket and cubicle
-        while(!newPool.distribution(this));
-        //starts dressing according to sleepTime
+        /*
+         * (e)(f) returns basket and cubicle
+         */
+        while(!newPool.distribution(this));//distributions starting (distributes resources if they are all available)
+        newPool.waiting(sleepingTime);//starts dressing according to sleepTime
 
-        newPool.waiting(sleepTime);//starts dressing according to sleepTime
+        /*
+         * update datas
+         */
         try {
+            //returns cubicle first nad then returns basket
             updater.setUpdate(newCubicle,this);
             updater.setUpdate(newBasket,this);
         } catch (InterruptedException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
 
-        //viewer.state_incidence(newCubicle,this); // returns cubicle and update datas
-        //viewer.state_incidence(newBasket,this); // returns basket and update datas
-
         System.out.println("a person : " + Thread.currentThread().getName()
                 + " has departed from pool" + "(complete)");
-        newPool.depature++;
+
+        newPool.depature++; //statistics depatures amount
+
+        /*
+         * if all people has depatured , stop viewer
+         */
         if(viewer.population==newPool.depature)
         {
             System.out.println("has done");
-            super.stop();
+            super.stop();//stop viewer
         }
         this.stop();//stops thread
     }
 }
 class viewer extends Thread {
-    Pool who=null;
-    Person person;
+    Pool who=null; // who can be pool/basket/cubicle
+    Person person=null;
     static int population; //people amounts
-    static List<Thread> list; //all person is in here
-    static update updater = new update();
+    static List<Thread> list=null; //all person is in here
+    static update updater = new update(); //al
     viewer(Pool p , List<Thread> list)
     {
         this.list=list;
         this.who=p;
         p.viewer=this;
     }
-    viewer()
-    {
-    }
+    viewer(){}
+    /*
+     * update datas according to who comes in ("who" is pool or basket or cubicle)
+     */
     synchronized static void state_incidence(Pool who , Person person) {
 
         if(who.getClass().equals(Pool.class))
         {
             who.getWaitingTime(person);
         }
-        //if the one is person then get watingTime(maybe do something like dressing or swimming)
+
         else if(who.getClass().equals(Basket.class))
         {
             person.basket--;
@@ -265,7 +286,9 @@ class viewer extends Thread {
         System.out.println(who.state());
 
     }
-    //when distribution finished , calls this function to update datas
+    /*
+     * when distribution available , calls this function to update datas
+     */
     synchronized void state_loading(Pool who , Person person) {
 
         try {
@@ -276,14 +299,13 @@ class viewer extends Thread {
         }
 
         who.available=true;
-
         notifyAll();
     }
     public void run()
     {
 
         //here is population setting
-        for(int n=0;n<2000;n++)
+        for(int n=0;n<10;n++)
         {
             Thread thread = new Person(who);//here (who) is Pool
             list.add(thread);
@@ -302,24 +324,32 @@ class viewer extends Thread {
 }
 class update extends Thread
 {
+    /*
+     * ensures datas' updating accuracy , we need to know who wants to udate datas
+     */
     static Pool pool;
     static Person person;
     static viewer viewer;
+    Thread updater=null;
     synchronized void setUpdate(Pool pool,Person person) throws InterruptedException{
+
+        /*
+         * points to data's possessors
+         */
+
         this.pool=pool;
         this.person=person;
         this.viewer=pool.viewer;
-        Thread updater=new update();
 
+        if(updater==null)
+            updater=new update();
 
-        updater.start();
-        updater.join();
+        updater.run();
+        updater.join();//other instructions will temporarily suspended until "updater.run()" finished
     }
     public void run()
     {
-
         viewer.state_incidence(pool,person);
-        stop();
     }
 }
 public class SP {
