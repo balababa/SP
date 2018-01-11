@@ -556,7 +556,7 @@ public class gui extends JFrame implements ActionListener{
 
 
 
-        setTitle("遊戲動畫");
+
         setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
@@ -591,7 +591,7 @@ public class gui extends JFrame implements ActionListener{
         viewer.start();//notice that it can be used for updating states and managing people
 
 
-        new GameAnimation().setVisible(true);
+
 
 
     }
