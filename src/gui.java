@@ -188,10 +188,7 @@ class Pool implements Action {
     }
 
     static String state() {
-        return ((""
-                + "basket : " + BasketList.size() + "\n"
-                + "cubicle : " + CubicleList.size())
-                + "\n------------------------------\n");
+        return ("\n------------------------------\n");
     }
 }
 
@@ -314,6 +311,9 @@ class viewer extends Thread {
 
             System.out.println(person.getName() + " returns cubicle" + "\n");
         }
+
+        gui.nCubicle.setText(""+who.CubicleList.size());
+        gui.nBasket.setText(""+who.BasketList.size());
         System.out.println(who.state());
 
     }
@@ -418,9 +418,9 @@ public class gui extends JFrame{
 
     public static int stop = 0;
     private JButton buttonStart = new JButton("Start");
-    public JTextField nCubicle = new JTextField("3");
-    public JTextField nPerson = new JTextField("10");
-    public JTextField nBasket =  new JTextField("5");
+    public static JTextField nCubicle = new JTextField("3");
+    public static JTextField nPerson = new JTextField("10");
+    public static JTextField nBasket =  new JTextField("5");
     public static int getBasket;
     public static int getCubicle;
     public static int getPerson;
@@ -507,8 +507,6 @@ public class gui extends JFrame{
                 getCubicle = Integer.valueOf(nCubicle.getText());
                 getPerson = Integer.valueOf(nPerson.getText());
                 go = 1;
-
-
 
             }
         });
