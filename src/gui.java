@@ -7,7 +7,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Timer;
-
 import java.util.TimerTask;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -413,7 +412,7 @@ class update extends Thread {
 
 
 
-public class gui extends JFrame implements ActionListener{
+public class gui extends JFrame{
 
     public static int go = 0;
     private PrintStream standardOut;
@@ -432,20 +431,6 @@ public class gui extends JFrame implements ActionListener{
     public JLabel personText = new JLabel("Person");
     public JLabel basketText = new JLabel("Basket");
     public JLabel cubicleText = new JLabel("cubicle");
-
-
-    final int SCREEN_WIDTH = 400;
-    final int SCREEN_HEIGHT = 400;
-    final int RECT_WIDTH = 20;
-    final int RECT_HEIGHT = 20;
-    final int DELAY_MS = 20;
-
-    int dx = 1;
-    int xPos = 0;
-    int yPos = SCREEN_HEIGHT / 2;
-    javax.swing.Timer timer;
-
-
     public gui(){
         super("Os");
 
@@ -553,17 +538,6 @@ public class gui extends JFrame implements ActionListener{
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(1080, 720);
         setLocationRelativeTo(null);    // centers on screen
-
-
-
-
-        setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setLocationRelativeTo(null);
-
-        timer = new javax.swing.Timer(DELAY_MS, this);
-        timer.setInitialDelay(190);
-        timer.start();
     }
 
 
@@ -591,30 +565,7 @@ public class gui extends JFrame implements ActionListener{
         viewer.start();//notice that it can be used for updating states and managing people
 
 
-
-
-
     }
 
-
-
-
-    public void update(Graphics g) {
-        this.paint(g);
-    }
-
-    public void paint(Graphics g) {
-        super.paint(g);
-        g.setColor(Color.GREEN);
-        g.fillRect(xPos, yPos, RECT_WIDTH, RECT_HEIGHT);
-    }
-
-
-
-
-    public void actionPerformed(ActionEvent arg0) {
-        this.repaint();
-        xPos += 1;
-        if( xPos >= SCREEN_WIDTH ) xPos = 0;
-    }
+    
 }
