@@ -348,6 +348,7 @@ class viewer extends Thread {
         System.out.println(who.state());
         //state_loading(who, person);
     }
+    
 
 }
 
@@ -387,10 +388,20 @@ class update extends Thread {
 public class gui extends JFrame{
     private PrintStream standardOut;
     public static int go = 0;
+    public static int stop = 0;
     private JButton buttonStart = new JButton("Start");
+    public JTextField nCubicle = new JTextField("3");
+    public JTextField nPerson = new JTextField("10");
+    public JTextField nBasket =  new JTextField("5");
+    public static int getBasket;
+    public static int getCubicle;
+    public static int getPerson;
+
     public JTextArea textArea;
-    private JButton buttonClear = new JButton("Clear");
-    private JPanel panelMain = new JPanel();
+    private JButton buttonStop = new JButton("Stop");
+    public JLabel personText = new JLabel("Person");
+    public JLabel basketText = new JLabel("Basket");
+    public JLabel cubicleText = new JLabel("cubicle");
     public gui(){
         super("Os");
 
@@ -408,6 +419,7 @@ public class gui extends JFrame{
         // creates the GUI
         setLayout(new GridBagLayout());
         GridBagConstraints constraints = new GridBagConstraints();
+
         constraints.gridx = 0;
         constraints.gridy = 0;
         constraints.insets = new Insets(10, 10, 10, 10);
@@ -416,10 +428,42 @@ public class gui extends JFrame{
         add(buttonStart, constraints);
 
         constraints.gridx = 1;
-        add(buttonClear, constraints);
+        add(buttonStop, constraints);
 
+        GridBagConstraints c0 = new GridBagConstraints();
+        c0.gridx = 0;
+        c0.gridy = 1;
+        c0.gridwidth = 1;
+        c0.gridheight = 1;
+        c0.weightx = 0;
+        c0.weighty = 0;
+        c0.fill = GridBagConstraints.NONE;
+        c0.anchor = GridBagConstraints.WEST;
+        c0.insets = new Insets(10, 10, 10, 20);
+        add(personText, c0);
+
+        GridBagConstraints c3 = new GridBagConstraints();
+        c3.gridx = 1;
+        c3.gridy = 1;
+        c3.gridwidth = 3;
+        c3.gridheight = 1;
+        c3.weightx = 0;
+        c3.weighty = 0;
+        c3.fill = GridBagConstraints.BOTH;
+        c3.insets = new Insets(10, 1, 10, 20);
+        add(nPerson, c3);
+        c3.gridy = 2;
+        add(nBasket, c3);
+        c0.gridy = 2;
+        add(basketText, c0);
+        c3.gridy = 3;
+        add(nCubicle, c3);
+        c0.gridy = 3;
+        add(cubicleText, c0);
+//        constraints.gridx = 2;
+//        add(nCubicle, constraints);
         constraints.gridx = 0;
-        constraints.gridy = 1;
+        constraints.gridy = 4;
         constraints.gridwidth = 2;
         constraints.fill = GridBagConstraints.BOTH;
         constraints.weightx = 1.0;
@@ -431,20 +475,25 @@ public class gui extends JFrame{
         buttonStart.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent evt) {
+                getBasket = Integer.valueOf(nBasket.getText());
+                getCubicle = Integer.valueOf(nCubicle.getText());
+                getPerson = Integer.valueOf(nPerson.getText());
                 go = 1;
 
             }
         });
 
         // adds event handler for button Clear
-        buttonClear.addActionListener(new ActionListener() {
+        buttonStop.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent evt) {
                 // clears the text area
                 try {
                     textArea.getDocument().remove(0,
                             textArea.getDocument().getLength());
+                    go = 0;
                     standardOut.println("Text area cleared");
+
                 } catch (BadLocationException ex) {
                     ex.printStackTrace();
                 }
@@ -459,13 +508,6 @@ public class gui extends JFrame{
 
 
 
-//        buttonStart.addActionListener(new ActionListener() {
-//            @Override
-//            public void actionPerformed(ActionEvent e) {
-//                go = 1;
-//            }
-//        });
-
 
     public static void main(String[] args)throws InterruptedException{
 
@@ -475,13 +517,7 @@ public class gui extends JFrame{
                 new gui().setVisible(true);
             }
         });
-//
-//        JFrame frame = new JFrame("swimPool");
-//        frame.setContentPane(new gui().panelMain);
-//        frame.add(new gui().startButton);
-//        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-//        frame.pack();
-//        frame.setVisible(true);
+
 
         while(go == 0){
             try {
@@ -497,6 +533,9 @@ public class gui extends JFrame{
 
         Thread viewer = new viewer(pool, list);//additional thread for checking other threads
         viewer.start();//notice that it can be used for updating states and managing people
+
+
+
 
     }
 }
