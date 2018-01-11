@@ -6,6 +6,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.io.IOException;
 import java.io.OutputStream;
 import javax.swing.JTextArea;
@@ -69,11 +71,11 @@ class Pool implements Action {
 
     //default the number of baskets and cublicles
     Pool() {
-        this.basket = 5;
-        this.cubicle = 3;
+//        this.basket = 15;
+//        this.cubicle = 13;
     }
 
-    Pool(int basket, int cubicle) {
+    Pool(int basket, int cubicle){
         this.basket = basket;
         this.cubicle = cubicle;
         setManager();
@@ -169,9 +171,7 @@ class Pool implements Action {
             System.out.println("a person : " + person.getName()
                     + " has gotten a basket and a cubicle " + "and will occupy cubicle at "
                     + person.sleepingTime + "seconds" + "(e)(f)");
-        } else
-
-        {
+        } else {
             System.out.println("a person : " + person.getName()
                     + " has gotten a basket and a cubicle " + "and will occupy cubicle at "
                     + person.sleepingTime + "seconds" + "(a)(b)(c)");
@@ -281,6 +281,8 @@ class Person extends Thread {
 }
 
 class viewer extends Thread {
+    public static final int peopleNumber=10;
+    static int peopleCreated=0;
     Pool who = null; // who can be pool/basket/cubicle
     Person person = null;
     static int population; //people amounts
@@ -332,23 +334,46 @@ class viewer extends Thread {
         notifyAll();
     }
 
-    public void run() {
+    public static int getPoisson(double lambda) {
+        double L = Math.exp(-lambda);
+        double p = 1.0;
+        int k = 0;
 
-        //here is population setting
-        for (int n = 0; n < 10; n++) {
-            Thread thread = new Person(who);//here (who) is Pool
-            list.add(thread);
+        do {
+            k++;
+            p *= Math.random();
+        } while (p > L);
+
+        return k - 1;
+    }
+
+    public class SimpleTask extends TimerTask{
+        //想要定時執行的工作寫在該method中
+        public void run(){
+            if(getPoisson(0.03)>=1 && peopleCreated < peopleNumber){
+                Thread thread = new Person(who);//here (who) is Pool
+                list.add(thread);
+                thread.start();
+                peopleCreated++;
+                population=list.size();
+
+            }
         }
+    }
+    public void run()
+    {
+        Timer timer = new Timer();
+        //here is population setting
+
+        timer.schedule(new SimpleTask(), 0, 100);
 
         //starting people(thread)
-        for (Thread l : list) {
-            l.start();
-        }
-        population = list.size();
+
         System.out.println(who.state());
+
         //state_loading(who, person);
+
     }
-    
 
 }
 
@@ -381,13 +406,16 @@ class update extends Thread {
     public void run() {
         viewer.state_incidence(pool, person);
     }
+
 }
 
 
 
 public class gui extends JFrame{
-    private PrintStream standardOut;
+
     public static int go = 0;
+    private PrintStream standardOut;
+
     public static int stop = 0;
     private JButton buttonStart = new JButton("Start");
     public JTextField nCubicle = new JTextField("3");
@@ -480,6 +508,8 @@ public class gui extends JFrame{
                 getPerson = Integer.valueOf(nPerson.getText());
                 go = 1;
 
+
+
             }
         });
 
@@ -491,7 +521,7 @@ public class gui extends JFrame{
                 try {
                     textArea.getDocument().remove(0,
                             textArea.getDocument().getLength());
-                    go = 0;
+
                     standardOut.println("Text area cleared");
 
                 } catch (BadLocationException ex) {
@@ -501,7 +531,7 @@ public class gui extends JFrame{
         });
 
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(480, 320);
+        setSize(1080, 720);
         setLocationRelativeTo(null);    // centers on screen
     }
 
@@ -517,24 +547,17 @@ public class gui extends JFrame{
                 new gui().setVisible(true);
             }
         });
-
-
         while(go == 0){
             try {
                 Thread.sleep(100);
             } catch(InterruptedException e) {
             }
         }
-
-        Pool pool = new Pool();//creadte new pool
-
+        Pool pool = new Pool(getBasket, getCubicle);//creadte new pool
         List<Thread> list = new ArrayList<>();//put all peopole (thread) into list
-        pool.setManager();//manage threads' baskets and cubicles states
 
         Thread viewer = new viewer(pool, list);//additional thread for checking other threads
         viewer.start();//notice that it can be used for updating states and managing people
-
-
 
 
     }
