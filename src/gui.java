@@ -1,3 +1,4 @@
+
 import javax.swing.*;
 import java.applet.Applet;
 import java.awt.event.ActionEvent;
@@ -23,8 +24,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.PrintStream;
 import java.util.Date;
-import java.awt.Color;
-import java.awt.Graphics;
+
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
@@ -286,6 +286,8 @@ class viewer extends Thread {
     static int population; //people amounts
     static List<Thread> list = null; //all person is in here
     static update updater = new update(); //al
+    boolean sus=false;
+    Timer timer ;
 
     viewer(Pool p, List<Thread> list) {
         this.list = list;
@@ -294,6 +296,26 @@ class viewer extends Thread {
     }
 
     viewer() {
+    }
+
+    public void ssuspend() {
+        timer.cancel();
+        for(Thread t:list)
+            t.suspend();
+
+
+        sus=true;
+
+    }
+    public void rresume() {
+        run();
+        for(Thread t:list)
+        {
+            t.resume();
+        }
+
+        sus=false;
+
     }
 
     /*
@@ -358,13 +380,16 @@ class viewer extends Thread {
                 peopleCreated++;
                 population=list.size();
 
+
             }
         }
     }
     public void run()
     {
-        Timer timer = new Timer();
+        timer = new Timer();
         //here is population setting
+
+
 
         timer.schedule(new SimpleTask(), 0, 100);
 
@@ -425,6 +450,7 @@ public class gui extends JFrame{
     public static int getBasket;
     public static int getCubicle;
     public static int getPerson;
+    static Pool pool=null;
 
     public JTextArea textArea;
     private JButton buttonStop = new JButton("Stop");
@@ -507,10 +533,12 @@ public class gui extends JFrame{
                 getBasket = Integer.valueOf(nBasket.getText());
                 getCubicle = Integer.valueOf(nCubicle.getText());
                 getPerson = Integer.valueOf(nPerson.getText());
-                go = 1;
-                nBasket.setEditable(false);
-                nCubicle.setEditable(false);
 
+                go = 1;
+
+                if(pool.viewer.population!=0)
+                    if(pool.viewer.sus)
+                        pool.viewer.rresume();
             }
         });
 
@@ -519,20 +547,11 @@ public class gui extends JFrame{
             @Override
             public void actionPerformed(ActionEvent evt) {
                 // clears the text area
-                try {
-                    textArea.getDocument().remove(0,
-                            textArea.getDocument().getLength());
-
-                    standardOut.println("Text area cleared");
-
-                } catch (BadLocationException ex) {
-                    ex.printStackTrace();
-                }
-                nBasket.setEditable(true);
-                nCubicle.setEditable(true);
+                go = 0;
+                if(pool.viewer.sus==false)
+                    pool.viewer.ssuspend();
+                standardOut.println("Text area cleared");
             }
-
-
         });
 
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -560,12 +579,11 @@ public class gui extends JFrame{
         }
         Pool pool = new Pool(getBasket, getCubicle);//creadte new pool
         List<Thread> list = new ArrayList<>();//put all peopole (thread) into list
+        gui.pool=pool;
 
         Thread viewer = new viewer(pool, list);//additional thread for checking other threads
         viewer.start();//notice that it can be used for updating states and managing people
 
 
     }
-
-    
 }
