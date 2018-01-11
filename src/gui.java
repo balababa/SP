@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Timer;
+
 import java.util.TimerTask;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -23,7 +24,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.PrintStream;
 import java.util.Date;
-
+import java.awt.Color;
+import java.awt.Graphics;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
@@ -411,7 +413,7 @@ class update extends Thread {
 
 
 
-public class gui extends JFrame{
+public class gui extends JFrame implements ActionListener{
 
     public static int go = 0;
     private PrintStream standardOut;
@@ -430,6 +432,20 @@ public class gui extends JFrame{
     public JLabel personText = new JLabel("Person");
     public JLabel basketText = new JLabel("Basket");
     public JLabel cubicleText = new JLabel("cubicle");
+
+
+    final int SCREEN_WIDTH = 400;
+    final int SCREEN_HEIGHT = 400;
+    final int RECT_WIDTH = 20;
+    final int RECT_HEIGHT = 20;
+    final int DELAY_MS = 20;
+
+    int dx = 1;
+    int xPos = 0;
+    int yPos = SCREEN_HEIGHT / 2;
+    javax.swing.Timer timer;
+
+
     public gui(){
         super("Os");
 
@@ -507,6 +523,8 @@ public class gui extends JFrame{
                 getCubicle = Integer.valueOf(nCubicle.getText());
                 getPerson = Integer.valueOf(nPerson.getText());
                 go = 1;
+                nBasket.setEditable(false);
+                nCubicle.setEditable(false);
 
             }
         });
@@ -525,12 +543,27 @@ public class gui extends JFrame{
                 } catch (BadLocationException ex) {
                     ex.printStackTrace();
                 }
+                nBasket.setEditable(true);
+                nCubicle.setEditable(true);
             }
+
+
         });
 
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(1080, 720);
         setLocationRelativeTo(null);    // centers on screen
+
+
+
+        setTitle("遊戲動畫");
+        setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLocationRelativeTo(null);
+
+        timer = new javax.swing.Timer(DELAY_MS, this);
+        timer.setInitialDelay(190);
+        timer.start();
     }
 
 
@@ -558,5 +591,30 @@ public class gui extends JFrame{
         viewer.start();//notice that it can be used for updating states and managing people
 
 
+        new GameAnimation().setVisible(true);
+
+
+    }
+
+
+
+
+    public void update(Graphics g) {
+        this.paint(g);
+    }
+
+    public void paint(Graphics g) {
+        super.paint(g);
+        g.setColor(Color.GREEN);
+        g.fillRect(xPos, yPos, RECT_WIDTH, RECT_HEIGHT);
+    }
+
+
+
+
+    public void actionPerformed(ActionEvent arg0) {
+        this.repaint();
+        xPos += 1;
+        if( xPos >= SCREEN_WIDTH ) xPos = 0;
     }
 }
