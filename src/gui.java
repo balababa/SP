@@ -134,7 +134,16 @@ class Pool implements Action {
             BasketList.remove(0);
             viewer.waitingPeople++;
             gui.personArea.setText(viewer.peopleCreated-viewer.waitingPeople + "/10");
+            gui.basketArea.setText(viewer.waitingPeople-viewer.swimmingPeople + "/10");
+
+
             person.basket++;
+        }
+        else
+        {
+            viewer.leavingPeople++;
+            gui.basket2Area.setText(viewer.leavingPeople+"/10");
+            gui.poolArea.setText(viewer.swimmingPeople-viewer.leavingPeople+"/10");
         }
         person.newCubicle = CubicleList.get(0);
         CubicleList.remove(0);
@@ -169,7 +178,7 @@ class Pool implements Action {
 
     public void getWaitingTime(Person person) {
         //randomly sleeping ( time for dressing )
-        person.sleepingTime = (int) (Math.random() * 10 + 1);
+        person.sleepingTime = (int) (Math.random() * 3 + 3);
         actural_distribution(person);
         if (person.getPriority() == person.MAX_PRIORITY) {
             System.out.println("a person : " + person.getName()
@@ -230,8 +239,11 @@ class Person extends Thread {
          * (a)(b)(c)
          */
         while (!newPool.distribution(this)) ; //distributions starting (distributes resources if they are all available)
-        newPool.waiting(sleepingTime);//starts dressing according to sleepTime
 
+        newPool.waiting(sleepingTime);//starts dressing according to sleepTime
+        newPool.viewer.swimmingPeople++;
+        gui.basketArea.setText(newPool.viewer.waitingPeople-newPool.viewer.swimmingPeople+"/10");
+        gui.poolArea.setText(newPool.viewer.swimmingPeople-newPool.viewer.leavingPeople+"/10");
         /*
          * update data
          */
@@ -240,12 +252,15 @@ class Person extends Thread {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+
         /*
          * (d)
          */
+        int swimmingTime=(int)Math.random()*20+10;
+
         System.out.println("a person : " + Thread.currentThread().getName()
                 + " is swiming" + "(d)");
-
+        newPool.waiting(swimmingTime);
         this.setPriority(MAX_PRIORITY);//depature is given a high priority
 
         /*
@@ -293,7 +308,8 @@ class viewer extends Thread {
     boolean sus=false;
     Timer timer ;
     static int waitingPeople=0;
-
+    static int swimmingPeople=0;
+    static int leavingPeople=0;
     viewer(Pool p, List<Thread> list) {
         this.list = list;
         this.who = p;
@@ -341,7 +357,7 @@ class viewer extends Thread {
             System.out.println(person.getName() + " returns cubicle" + "\n");
         }
 
-        gui.basketArea.setText(who.BasketList.size()+"/5\n");
+
         gui.cubicleArea.setText(who.CubicleList.size()+"/3\n");
 //        gui.basketArea.setText(who.BasketList.size()+"/5:("+100*(double)who.BasketList.size()/(double)5+"%)\n");
 
@@ -491,13 +507,18 @@ public class gui extends JFrame {
     Image newimg3 = image3.getScaledInstance(140, 140,  java.awt.Image.SCALE_SMOOTH);
     public static JLabel basketArea;
 
+    ImageIcon bas2 = new ImageIcon("/Users/hsunyuan/basket.png");
+    Image image6 = bas2.getImage();
+    Image newimg6 = image6.getScaledInstance(140, 140,  java.awt.Image.SCALE_SMOOTH);
+    public static JLabel basket2Area;
+
     ImageIcon exi = new ImageIcon("/Users/hsunyuan/exit.png");
     Image image4 = exi.getImage();
     Image newimg4 = image4.getScaledInstance(140, 140,  java.awt.Image.SCALE_SMOOTH);
     public static JLabel exitArea;
 
     ImageIcon poo = new ImageIcon("/Users/hsunyuan/pool.png");
-    Image image5 = exi.getImage();
+    Image image5 = poo.getImage();
     Image newimg5 = image5.getScaledInstance(140, 140,  java.awt.Image.SCALE_SMOOTH);
     public static JLabel poolArea;
 
@@ -513,6 +534,10 @@ public class gui extends JFrame {
         basketArea = new JLabel(bas);
         exi = new ImageIcon(newimg4);
         exitArea = new JLabel(exi);
+        poo = new ImageIcon(newimg5);
+        poolArea = new JLabel(poo);
+        bas2 = new ImageIcon(newimg6);
+        basket2Area = new JLabel(bas);
         textArea = new JTextArea(50, 10);
         textArea.setEditable(false);
         PrintStream printStream = new PrintStream(new CustomOutputStream(textArea));
@@ -570,8 +595,10 @@ public class gui extends JFrame {
         c0.gridy = 3;
 //        add(cubicleText, c0);
         personArea.setText("0/10");
-        cubicleArea.setText("3/3");
-        basketArea.setText("5/5");
+        cubicleArea.setText("c:3/3\nb:5/5");
+        basketArea.setText("0/10");
+        poolArea.setText("0/10");
+        basket2Area.setText("0/10");
         exitArea.setText("0/"+viewer.peopleNumber);
         constraints.gridx = 0;
         constraints.gridy = 5;
@@ -584,12 +611,13 @@ public class gui extends JFrame {
 
         constraints.gridx = 1;
         add(personArea, constraints);
-        constraints.gridx++;
-        add(cubicleArea, constraints);
+
         constraints.gridx++;
         add(basketArea, constraints);
         constraints.gridx++;
-        add(exitArea, constraints);
+        add(poolArea, constraints);
+        constraints.gridx++;
+        add(basket2Area, constraints);
         constraints.gridx = 0;
         constraints.gridy++;
         constraints.gridwidth = 5;
