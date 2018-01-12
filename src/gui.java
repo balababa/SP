@@ -1,4 +1,4 @@
-
+import java.util.Random;
 import javax.swing.*;
 import java.applet.Applet;
 import java.awt.event.ActionEvent;
@@ -57,8 +57,8 @@ class Cubicle extends Pool {
 }
 
 class Pool implements Action {
-    private static int basket; //a pool that possesses the number of baskets
-    private static int cubicle;//a pool that possesses the number of cubicles
+    private static int basket = 5; //a pool that possesses the number of baskets
+    private static int cubicle = 3;//a pool that possesses the number of cubicles
     public static boolean available = true; //judgues if resoures can be distributed now
     public static int depature = 0; //statistics depatures
     static viewer viewer = null; //allocate a viewer to pool
@@ -132,10 +132,13 @@ class Pool implements Action {
         if (person.getPerson_Basket() == 0) {
             person.newBasket = BasketList.get(0);
             BasketList.remove(0);
+            viewer.waitingPeople++;
+            gui.personArea.setText(viewer.peopleCreated-viewer.waitingPeople + "/10");
             person.basket++;
         }
         person.newCubicle = CubicleList.get(0);
         CubicleList.remove(0);
+
         available = false;
     }
 
@@ -189,7 +192,7 @@ class Pool implements Action {
     }
 
     static String state() {
-        return ("\n------------------------------\n");
+        return ("basket: "+BasketList.size()+"\n"+"cubicle: "+CubicleList.size()+"\n------------------------------\n");
     }
 }
 
@@ -267,14 +270,15 @@ class Person extends Thread {
 
         newPool.depature++; //statistics depatures amount
 
+        gui.exitArea.setText(""+ newPool.depature+"/10\n");
         /*
          * if all people has depatured , stop viewer
          */
         if (viewer.population == newPool.depature) {
             System.out.println("\n------------------------------\ndone");
-            super.stop();//stop viewer
+           // super.stop();//stop viewer
         }
-        this.stop();//stops thread
+       // this.stop();//stops thread
     }
 }
 
@@ -288,6 +292,7 @@ class viewer extends Thread {
     static update updater = new update(); //al
     boolean sus=false;
     Timer timer ;
+    static int waitingPeople=0;
 
     viewer(Pool p, List<Thread> list) {
         this.list = list;
@@ -322,8 +327,9 @@ class viewer extends Thread {
      * update datas according to who comes in ("who" is pool or basket or cubicle)
      */
     synchronized static void state_incidence(Pool who, Person person) {
-
         if (who.getClass().equals(Pool.class)) {
+
+
             who.getWaitingTime(person);
         } else if (who.getClass().equals(Basket.class)) {
             person.basket--;
@@ -335,8 +341,12 @@ class viewer extends Thread {
             System.out.println(person.getName() + " returns cubicle" + "\n");
         }
 
-        gui.nCubicle.setText(""+who.CubicleList.size());
-        gui.nBasket.setText(""+who.BasketList.size());
+        gui.basketArea.setText(who.BasketList.size()+"/5\n");
+        gui.cubicleArea.setText(who.CubicleList.size()+"/3\n");
+//        gui.basketArea.setText(who.BasketList.size()+"/5:("+100*(double)who.BasketList.size()/(double)5+"%)\n");
+
+// gui.nCubicle.setText(""+who.CubicleList.size());
+//        gui.nBasket.setText(""+who.BasketList.size());
         System.out.println(who.state());
 
     }
@@ -378,6 +388,8 @@ class viewer extends Thread {
                 list.add(thread);
                 thread.start();
                 peopleCreated++;
+
+                gui.personArea.setText(peopleCreated-waitingPeople+"/10");
                 population=list.size();
 
 
@@ -437,8 +449,14 @@ class update extends Thread {
 
 
 
-public class gui extends JFrame{
 
+
+public class gui extends JFrame {
+
+    public Image person = new ImageIcon("/Users/hsunyuan/person.png").getImage();
+    public Image basket = new ImageIcon("/Users/hsunyuan/basket.png").getImage();
+    public Image cubicle = new ImageIcon("/Users/hsunyuan/cubicle.png").getImage();
+    public Image exit = new ImageIcon("/Users/hsunyuan/exit.png").getImage();
     public static int go = 0;
     private PrintStream standardOut;
 
@@ -457,9 +475,44 @@ public class gui extends JFrame{
     public JLabel personText = new JLabel("Person");
     public JLabel basketText = new JLabel("Basket");
     public JLabel cubicleText = new JLabel("cubicle");
+
+    ImageIcon per = new ImageIcon("/Users/hsunyuan/person.png");
+    Image image = per.getImage();
+    Image newimg = image.getScaledInstance(120, 120,  java.awt.Image.SCALE_SMOOTH);
+    public static JLabel personArea;
+
+    ImageIcon cub = new ImageIcon("/Users/hsunyuan/cubicle.png");
+    Image image2 = cub.getImage();
+    Image newimg2 = image2.getScaledInstance(140, 140,  java.awt.Image.SCALE_SMOOTH);
+    public static JLabel cubicleArea;
+
+    ImageIcon bas = new ImageIcon("/Users/hsunyuan/basket.png");
+    Image image3 = bas.getImage();
+    Image newimg3 = image3.getScaledInstance(140, 140,  java.awt.Image.SCALE_SMOOTH);
+    public static JLabel basketArea;
+
+    ImageIcon exi = new ImageIcon("/Users/hsunyuan/exit.png");
+    Image image4 = exi.getImage();
+    Image newimg4 = image4.getScaledInstance(140, 140,  java.awt.Image.SCALE_SMOOTH);
+    public static JLabel exitArea;
+
+    ImageIcon poo = new ImageIcon("/Users/hsunyuan/pool.png");
+    Image image5 = exi.getImage();
+    Image newimg5 = image5.getScaledInstance(140, 140,  java.awt.Image.SCALE_SMOOTH);
+    public static JLabel poolArea;
+
     public gui(){
+
         super("Os");
 
+        per = new ImageIcon(newimg);
+        personArea = new JLabel(per);
+        cub = new ImageIcon(newimg2);
+        cubicleArea = new JLabel(cub);
+        bas = new ImageIcon(newimg3);
+        basketArea = new JLabel(bas);
+        exi = new ImageIcon(newimg4);
+        exitArea = new JLabel(exi);
         textArea = new JTextArea(50, 10);
         textArea.setEditable(false);
         PrintStream printStream = new PrintStream(new CustomOutputStream(textArea));
@@ -477,10 +530,11 @@ public class gui extends JFrame{
 
         constraints.gridx = 0;
         constraints.gridy = 0;
-        constraints.insets = new Insets(10, 10, 10, 10);
+        constraints.insets = new Insets(10, 5, 10, 10);
         constraints.anchor = GridBagConstraints.WEST;
 
         add(buttonStart, constraints);
+
 
         constraints.gridx = 1;
         add(buttonStop, constraints);
@@ -495,7 +549,7 @@ public class gui extends JFrame{
         c0.fill = GridBagConstraints.NONE;
         c0.anchor = GridBagConstraints.WEST;
         c0.insets = new Insets(10, 10, 10, 20);
-        add(personText, c0);
+//        add(personText, c0);
 
         GridBagConstraints c3 = new GridBagConstraints();
         c3.gridx = 1;
@@ -506,26 +560,40 @@ public class gui extends JFrame{
         c3.weighty = 0;
         c3.fill = GridBagConstraints.BOTH;
         c3.insets = new Insets(10, 1, 10, 20);
-        add(nPerson, c3);
+//        add(nPerson, c3);
         c3.gridy = 2;
-        add(nBasket, c3);
+//        add(nBasket, c3);
         c0.gridy = 2;
-        add(basketText, c0);
+//        add(basketText, c0);
         c3.gridy = 3;
-        add(nCubicle, c3);
+//        add(nCubicle, c3);
         c0.gridy = 3;
-        add(cubicleText, c0);
-//        constraints.gridx = 2;
-//        add(nCubicle, constraints);
+//        add(cubicleText, c0);
+        personArea.setText("0/10");
+        cubicleArea.setText("3/3");
+        basketArea.setText("5/5");
+        exitArea.setText("0/"+viewer.peopleNumber);
         constraints.gridx = 0;
-        constraints.gridy = 4;
-        constraints.gridwidth = 2;
+        constraints.gridy = 5;
+        constraints.gridwidth = 1;
         constraints.fill = GridBagConstraints.BOTH;
         constraints.weightx = 1.0;
         constraints.weighty = 1.0;
 
-        add(new JScrollPane(textArea), constraints);
 
+
+        constraints.gridx = 1;
+        add(personArea, constraints);
+        constraints.gridx++;
+        add(cubicleArea, constraints);
+        constraints.gridx++;
+        add(basketArea, constraints);
+        constraints.gridx++;
+        add(exitArea, constraints);
+        constraints.gridx = 0;
+        constraints.gridy++;
+        constraints.gridwidth = 5;
+                add(new JScrollPane(textArea), constraints);
         // adds event handler for button Start
         buttonStart.addActionListener(new ActionListener() {
             @Override
@@ -535,6 +603,7 @@ public class gui extends JFrame{
                 getPerson = Integer.valueOf(nPerson.getText());
 
                 go = 1;
+
 
                 if(pool.viewer.population!=0)
                     if(pool.viewer.sus)
@@ -548,15 +617,19 @@ public class gui extends JFrame{
             public void actionPerformed(ActionEvent evt) {
                 // clears the text area
                 go = 0;
-                if(pool.viewer.sus==false)
+                if(pool.viewer.sus == false)
                     pool.viewer.ssuspend();
                 standardOut.println("Text area cleared");
+
+
             }
+
         });
 
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(1080, 720);
         setLocationRelativeTo(null);    // centers on screen
+
     }
 
 
@@ -586,4 +659,5 @@ public class gui extends JFrame{
 
 
     }
+
 }
